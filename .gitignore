@@ -95,3 +95,6 @@ coverage/
 .fvm/
 .vscode/
 *.lock
+
+# Flutter SDK (if cloned locally)
+flutter/
