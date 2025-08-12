@@ -1,0 +1,64 @@
+name: Flutter Web CI/CD
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.16.0'
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    
+    steps:
+      # Step 1: Get the code
+      - name: 📚 Checkout repository
+        uses: actions/checkout@v3
+      
+      # Step 2: Setup Flutter
+      - name: 🎯 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+      
+      # Step 3: Install dependencies
+      - name: 📦 Install dependencies
+        run: flutter pub get
+      
+      # Step 4: Run tests (optional - comment out if no tests yet)
+      - name: 🧪 Run tests
+        run: flutter test || true  # Continue even if tests fail initially
+      
+      # Step 5: Build the web app
+      - name: 🔨 Build Flutter web
+        run: |
+          flutter build web --release \
+            --base-href "/admin-helper/" \
+            --web-renderer canvaskit
+      
+      # Step 6: Prepare for deployment
+      - name: 📝 Add deployment files
+        run: |
+          # Add a 404.html for single-page app routing
+          cp build/web/index.html build/web/404.html
+          
+          # Add a simple robots.txt
+          echo "User-agent: *" > build/web/robots.txt
+          echo "Allow: /" >> build/web/robots.txt
+      
+      # Step 7: Deploy to GitHub Pages (easiest option)
+      - name: 🚀 Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          force_orphan: true

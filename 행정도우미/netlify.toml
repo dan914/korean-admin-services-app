@@ -1,0 +1,42 @@
+# Netlify deployment configuration
+
+[build]
+  # Directory to deploy
+  publish = "build/web"
+  
+  # Build command
+  command = "flutter build web --release"
+
+# Redirect all routes to index.html for single-page app
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, immutable"
+
+[[headers]]
+  for = "/*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Environment variables (add your Supabase credentials here)
+[build.environment]
+  FLUTTER_VERSION = "3.16.0"
