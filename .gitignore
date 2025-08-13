@@ -98,3 +98,6 @@ coverage/
 
 # Flutter SDK (if cloned locally)
 flutter/
+
+# Claude Code settings
+.claude/
