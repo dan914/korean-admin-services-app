@@ -58,7 +58,9 @@
       "Bash(export ANDROID_HOME=\"/opt/homebrew/share/android-commandlinetools\")",
       "Bash(export PATH=\"$PATH:$ANDROID_HOME/cmdline-tools/latest/bin\")",
       "Bash(sdkmanager:*)",
-      "Bash(java:*)"
+      "Bash(java:*)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(./check_apk_status.sh:*)"
     ],
     "deny": []
   }

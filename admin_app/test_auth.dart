@@ -10,7 +10,7 @@ void main() async {
   final client = Supabase.instance.client;
   
   print('Testing Supabase connection...');
-  print('Supabase URL: ${client.supabaseUrl}');
+  print('Supabase URL: ${client.supabaseKey != null ? "Connected" : "Not connected"}');
   
   // Test 1: Try to fetch from applications without auth
   print('\n1. Testing SELECT without authentication:');

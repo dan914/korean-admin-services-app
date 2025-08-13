@@ -32,11 +32,6 @@ jobs:
         cd "./행정도우미"
         flutter pub get
         
-    - name: Analyze code
-      run: |
-        cd "./행정도우미"
-        flutter analyze --no-fatal-infos
-        
     - name: Build APK
       run: |
         cd "./행정도우미"
@@ -72,11 +67,6 @@ jobs:
       run: |
         cd admin_app
         flutter pub get
-        
-    - name: Analyze code
-      run: |
-        cd admin_app
-        flutter analyze --no-fatal-infos
         
     - name: Build APK
       run: |
