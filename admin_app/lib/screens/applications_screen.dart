@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../ui/design_tokens.dart';
 import '../providers/application_provider.dart';
 import 'package:intl/intl.dart';
+import '../utils/code_mappings.dart';
 
 class ApplicationsScreen extends ConsumerStatefulWidget {
   const ApplicationsScreen({Key? key}) : super(key: key);
@@ -27,6 +29,17 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
         backgroundColor: Colors.white,
         foregroundColor: DesignTokens.textPrimary,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.read(applicationProvider.notifier).refresh(),
+            tooltip: '새로고침',
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -173,7 +186,37 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
             ),
           ],
         ),
-        subtitle: Text(app['phone'] ?? '전화번호 없음'),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(app['phone'] ?? '전화번호 없음'),
+            if (app['form_data']?['step_4'] != null) 
+              Text(
+                '서비스: ${CodeMappings.getServiceTypeLabel(app['form_data']?['step_4'])}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: DesignTokens.textSecondary,
+                ),
+              ),
+            if (app['form_data']?['step_9'] != null)
+              Text(
+                '상담방식: ${CodeMappings.getStepLabel(9, app['form_data']?['step_9'])}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: DesignTokens.textSecondary,
+                ),
+              ),
+            if (app['form_data']?['reservationDate'] != null)
+              Text(
+                '예약: ${_formatDate(app['form_data']?['reservationDate'])}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
+        ),
         children: [
           Container(
             padding: const EdgeInsets.all(16),
@@ -186,12 +229,81 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // All 10 Wizard Steps Section
+                Text(
+                  '신청 내용 (10단계 답변)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: DesignTokens.textPrimary,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Display all 10 steps
+                for (int i = 1; i <= 10; i++) ...[
+                  _buildDetailRow(
+                    '${i}. ${CodeMappings.getStepTitle(i)}',
+                    CodeMappings.getStepLabel(i, app['form_data']?['step_$i']),
+                  ),
+                ],
+                const Divider(height: 24),
+                
+                // Consultation Reservation Section
+                if (app['form_data']?['reservationDate'] != null) ...[
+                  Text(
+                    '상담 예약',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: DesignTokens.textPrimary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDetailRow('예약 날짜', _formatDate(app['form_data']?['reservationDate'])),
+                  _buildDetailRow('1차 희망 시간', app['form_data']?['firstTimeSlot'] ?? '-'),
+                  _buildDetailRow('2차 희망 시간', app['form_data']?['secondTimeSlot'] ?? '-'),
+                  const Divider(height: 24),
+                ],
+                
+                // Contact Information Section
+                Text(
+                  '연락처 정보',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: DesignTokens.textPrimary,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 _buildDetailRow('이메일', app['email'] ?? '-'),
-                _buildDetailRow('접수일시', _formatDate(app['timestamp'])),
-                _buildDetailRow('상담 희망일', app['reservationDate'] ?? '-'),
-                _buildDetailRow('1순위 시간', app['firstTimeSlot'] ?? '-'),
-                _buildDetailRow('2순위 시간', app['secondTimeSlot'] ?? '-'),
+                _buildDetailRow('접수일시', _formatDate(app['created_at'])),
+                _buildDetailRow('알림 설정', _getNotificationPreferences(app)),
                 const SizedBox(height: 16),
+                
+                // Description Section
+                if ((app['description'] != null && app['description'].toString().isNotEmpty) || 
+                    (app['form_data']?['description'] != null && app['form_data']['description'].toString().isNotEmpty)) ...[
+                  Text(
+                    '상세 설명',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: DesignTokens.textPrimary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: DesignTokens.borderLight),
+                    ),
+                    child: Text(app['description'] ?? app['form_data']?['description'] ?? app['form_data']?['memo'] ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 
                 // Memo section
                 if (app['memo'] != null && app['memo'].isNotEmpty) ...[
@@ -351,6 +463,14 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     } catch (e) {
       return timestamp;
     }
+  }
+
+  String _getNotificationPreferences(Map<String, dynamic> app) {
+    List<String> prefs = [];
+    if (app['notification_kakao'] == true) prefs.add('카카오톡');
+    if (app['notification_sms'] == true) prefs.add('SMS');
+    if (app['notification_email'] == true) prefs.add('이메일');
+    return prefs.isEmpty ? '없음' : prefs.join(', ');
   }
 
   void _updateStatus(int index, String status) {

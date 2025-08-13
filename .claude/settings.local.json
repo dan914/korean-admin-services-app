@@ -39,7 +39,20 @@
       "Bash(true)",
       "Bash(./행정도우미/run_with_supabase.sh:*)",
       "Bash(git rm:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(gh:*)",
+      "Bash(/Users/yujumyeong/coding projects/행정사/flutter/bin/flutter pub get)",
+      "Bash(brew install:*)",
+      "Bash(brew list:*)",
+      "Bash(echo $PATH)",
+      "Bash(git clone:*)",
+      "Bash(flutter/bin/flutter:*)",
+      "Bash(./run_admin.sh)",
+      "Bash(tar:*)",
+      "Bash(zip:*)",
+      "Bash(cd:*)",
+      "Bash(kill:*)",
+      "Bash(dart run:*)"
     ],
     "deny": []
   }

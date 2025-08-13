@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../ui/design_tokens.dart';
 import '../providers/auth_provider.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -32,10 +33,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Simple authentication - replace with real auth in production
-      if (_emailController.text == 'admin@example.com' && 
-          _passwordController.text == 'admin1234') {
-        
+      // Authenticate with Supabase
+      final authService = AuthService();
+      final response = await authService.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      
+      if (response.session != null) {
         // Save login state
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
@@ -49,15 +54,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context.go('/dashboard');
         }
       } else {
-        // Show error
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('잘못된 이메일 또는 비밀번호입니다'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        throw Exception('Failed to create session');
+      }
+    } catch (e) {
+      // Show error
+      if (mounted) {
+        String errorMessage = '로그인 실패';
+        
+        if (e.toString().contains('Invalid login')) {
+          errorMessage = '잘못된 이메일 또는 비밀번호입니다';
+        } else if (e.toString().contains('User not found')) {
+          errorMessage = '등록되지 않은 사용자입니다';
+        } else if (e.toString().contains('Network')) {
+          errorMessage = '네트워크 연결을 확인해주세요';
+        } else {
+          errorMessage = '로그인 중 오류가 발생했습니다: ${e.toString()}';
         }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -236,7 +256,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '테스트 계정',
+                                '로그인 정보',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: DesignTokens.info,
@@ -244,7 +264,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '이메일: admin@example.com\n비밀번호: admin1234',
+                                'Supabase 계정을 사용하여 로그인하세요.\n관리자 권한이 필요합니다.',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: DesignTokens.textSecondary,

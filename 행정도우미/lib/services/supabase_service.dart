@@ -32,6 +32,10 @@ class SupabaseService {
     required Map<String, dynamic> formData,
     required Map<String, dynamic> contactInfo,
   }) async {
+    print('📤 Starting Supabase submission...');
+    print('📤 Form data: $formData');
+    print('📤 Contact info: $contactInfo');
+    
     try {
       // Process documents if they exist
       final documents = formData['documents'] as List<PlatformFile>?;
@@ -53,12 +57,41 @@ class SupabaseService {
         processedFormData.remove('documents');
       }
       
+      // Extract key fields from form data for direct columns
+      // The wizard uses step_1, step_2, etc. for storing answers
+      // Map wizard steps to business fields
+      final businessType = formData['step_1'] ?? '';  // Purpose/목적
+      final businessName = contactInfo['name'] ?? '';  // Use contact name as business name
+      final serviceType = formData['step_4'] ?? '';  // Service type/사안 종류
+      final description = formData['memo'] ?? '';
+      final urgency = formData['step_3'] == 'notice' || formData['step_3'] == 'rejected' ? 'urgent' : 'normal';
+      final budget = '';  // Not collected in the wizard
+      final location = formData['step_5'] ?? '';  // Region/지역
+      final agencyCode = formData['step_2'] ?? '';  // Agency/기관
+      
       final response = await client
-          .from('leads')
+          .from('applications')
           .insert({
             'form_data': processedFormData,
-            'contact_info': contactInfo,
+            'name': contactInfo['name'],
+            'phone': contactInfo['phone'],
+            'email': contactInfo['email'],
+            // Add extracted business fields
+            'business_type': businessType,
+            'business_name': businessName,
+            'service_type': serviceType,
+            'description': description,
+            'urgency': urgency,
+            'budget': budget,
+            'location': location,
+            'documents': documentInfo,
+            // Notification preferences
+            'notification_kakao': contactInfo['notification_preferences']?['kakao'] ?? false,
+            'notification_sms': contactInfo['notification_preferences']?['sms'] ?? false,
+            'notification_email': contactInfo['notification_preferences']?['email'] ?? false,
             'status': 'pending',
+            'priority': urgency == 'urgent' ? 'high' : 'normal',
+            'source': 'web_form',
           })
           .select()
           .single();
@@ -75,6 +108,8 @@ class SupabaseService {
 
       return response;
     } catch (e) {
+      print('❌ Supabase error details: $e');
+      print('❌ Error type: ${e.runtimeType}');
       throw Exception('Failed to submit lead: $e');
     }
   }
@@ -128,7 +163,7 @@ class SupabaseService {
   }) async {
     try {
       var query = client
-          .from('leads')
+          .from('applications')
           .select();
       
       if (status != null) {
@@ -158,7 +193,7 @@ class SupabaseService {
       };
 
       final response = await client
-          .from('leads')
+          .from('applications')
           .update(updateData)
           .eq('id', leadId)
           .select()
