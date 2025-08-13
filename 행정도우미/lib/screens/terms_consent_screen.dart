@@ -470,14 +470,28 @@ class _TermsConsentScreenState extends ConsumerState<TermsConsentScreen> {
             ),
             TextButton(
               onPressed: () {
-                // Simple password check - you should use more secure authentication
-                if (passwordController.text == 'admin1234') {
+                // Use environment variable for admin password
+                // Run with: flutter run --dart-define=ADMIN_PASSWORD=your_secure_password
+                final adminPassword = const String.fromEnvironment('ADMIN_PASSWORD');
+                
+                if (adminPassword.isEmpty) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('관리자 기능이 비활성화되어 있습니다'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                } else if (passwordController.text == adminPassword) {
                   Navigator.of(context).pop();
                   context.go('/admin');
                 } else {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('잘못된 비밀번호입니다')),
+                    SnackBar(
+                      content: Text('잘못된 비밀번호입니다'),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               },

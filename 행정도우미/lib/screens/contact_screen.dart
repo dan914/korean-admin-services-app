@@ -176,14 +176,6 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                         : null,
                   ),
                   SizedBox(height: DesignTokens.spacingBase),
-                  // Debug button
-                  TextButton(
-                    onPressed: () {
-                      print('🔧 DEBUG: Direct navigation to success');
-                      context.go('/success');
-                    },
-                    child: const Text('디버그: 성공 화면으로'),
-                  ),
                 ],
               ),
             ),

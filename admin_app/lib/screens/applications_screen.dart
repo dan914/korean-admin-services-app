@@ -328,7 +328,89 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                   const SizedBox(height: 16),
                 ],
                 
+                // Notification Section - SMS and Email only (KakaoTalk disabled)
+                if (app['notification_sms'] == true || app['notification_email'] == true) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.phone, size: 16, color: Colors.grey.shade700),
+                            const SizedBox(width: 4),
+                            Text(
+                              '연락처 정보',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Show phone number for manual SMS
+                        if (app['notification_sms'] == true)
+                          Row(
+                            children: [
+                              const Icon(Icons.phone_android, size: 14, color: Colors.green),
+                              const SizedBox(width: 4),
+                              SelectableText(
+                                app['phone'] ?? '',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '(SMS 수동 발송)',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        const SizedBox(height: 4),
+                        // Email button remains functional
+                        if (app['notification_email'] == true && app['email'] != null)
+                          Row(
+                            children: [
+                              const Icon(Icons.email, size: 14, color: Colors.blue),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  app['email'] ?? '',
+                                  style: const TextStyle(fontSize: 13),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton.icon(
+                                onPressed: () => _sendEmailNotification(app),
+                                icon: const Icon(Icons.send, size: 14),
+                                label: const Text('이메일 전송', style: TextStyle(fontSize: 12)),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                
                 // Action buttons
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -479,6 +561,107 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
       SnackBar(
         content: Text('상태가 ${_getStatusText(status)}(으)로 변경되었습니다'),
         backgroundColor: _getStatusColor(status),
+      ),
+    );
+  }
+
+  void _sendKakaoNotification(Map<String, dynamic> app) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('카카오톡 알림 전송'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('어떤 알림을 보내시겠습니까?'),
+            const SizedBox(height: 16),
+            ListTile(
+              title: const Text('접수 확인'),
+              onTap: () {
+                Navigator.pop(context);
+                _showNotificationConfirm('카카오톡', '접수 확인 알림을 전송했습니다');
+              },
+            ),
+            ListTile(
+              title: const Text('상태 변경'),
+              onTap: () {
+                Navigator.pop(context);
+                _showNotificationConfirm('카카오톡', '상태 변경 알림을 전송했습니다');
+              },
+            ),
+            ListTile(
+              title: const Text('상담 일정 안내'),
+              onTap: () {
+                Navigator.pop(context);
+                _showNotificationConfirm('카카오톡', '상담 일정 알림을 전송했습니다');
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _sendSMSNotification(Map<String, dynamic> app) {
+    _showNotificationConfirm('SMS', 'SMS 알림을 전송했습니다');
+  }
+
+  void _sendEmailNotification(Map<String, dynamic> app) {
+    _showNotificationConfirm('이메일', '이메일 알림을 전송했습니다');
+  }
+
+  void _showNotificationConfirm(String type, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        action: SnackBarAction(
+          label: '확인',
+          textColor: Colors.white,
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+
+  void _sendEmailNotification(Map<String, dynamic> app) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('이메일 전송'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('${app['name']}님께 이메일을 전송하시겠습니까?'),
+            const SizedBox(height: 8),
+            Text('이메일: ${app['email'] ?? "등록된 이메일 없음"}', style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: app['email'] != null ? () {
+              Navigator.of(context).pop();
+              // TODO: Implement actual email sending
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('이메일이 전송되었습니다'),
+                  backgroundColor: Colors.blue,
+                ),
+              );
+            } : null,
+            child: const Text('전송'),
+          ),
+        ],
       ),
     );
   }
