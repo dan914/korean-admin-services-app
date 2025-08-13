@@ -30,7 +30,96 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
   final _formKey = GlobalKey<FormState>();
   final _formData = ContactFormData();
   bool _isSubmitting = false;
-  String? _errorMessage;
+  
+  // Text controllers for real-time validation
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  
+  // Validation error messages
+  String? _nameError;
+  String? _phoneError;
+  String? _emailError;
+  
+  // Real-time validation flags
+  bool _hasNameBeenEdited = false;
+  bool _hasPhoneBeenEdited = false;
+  bool _hasEmailBeenEdited = false;
+  
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+  
+  // Real-time validation methods
+  void _validateName(String value) {
+    setState(() {
+      _hasNameBeenEdited = true;
+      if (value.isEmpty) {
+        _nameError = '성함을 입력해 주시기 바랍니다';
+      } else if (value.length < 2) {
+        _nameError = '이름은 2자 이상 입력해주세요';
+      } else if (value.length > 50) {
+        _nameError = '이름은 50자 이내로 입력해주세요';
+      } else if (!RegExp(r'^[가-힣a-zA-Z\s]+$').hasMatch(value)) {
+        _nameError = '올바른 이름 형식이 아닙니다';
+      } else {
+        _nameError = null;
+      }
+      _formData.name = value;
+    });
+  }
+  
+  void _validatePhone(String value) {
+    setState(() {
+      _hasPhoneBeenEdited = true;
+      final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+      
+      if (value.isEmpty) {
+        _phoneError = '휴대폰 번호를 입력해 주시기 바랍니다';
+      } else if (digits.length < 10) {
+        _phoneError = '휴대폰 번호가 너무 짧습니다';
+      } else if (digits.length > 11) {
+        _phoneError = '휴대폰 번호가 너무 깁니다';
+      } else if (!digits.startsWith('01')) {
+        _phoneError = '올바른 휴대폰 번호가 아닙니다 (01X로 시작)';
+      } else {
+        _phoneError = null;
+        // Auto-format phone number
+        if (digits.length == 10) {
+          _phoneController.value = TextEditingValue(
+            text: '${digits.substring(0, 3)}-${digits.substring(3, 6)}-${digits.substring(6)}',
+            selection: TextSelection.collapsed(offset: value.length + 2),
+          );
+        } else if (digits.length == 11) {
+          _phoneController.value = TextEditingValue(
+            text: '${digits.substring(0, 3)}-${digits.substring(3, 7)}-${digits.substring(7)}',
+            selection: TextSelection.collapsed(offset: value.length + 2),
+          );
+        }
+      }
+      _formData.phone = '+82${digits.startsWith('0') ? digits.substring(1) : digits}';
+    });
+  }
+  
+  void _validateEmail(String value) {
+    setState(() {
+      _hasEmailBeenEdited = true;
+      if (value.isEmpty) {
+        _emailError = '이메일 주소를 입력해 주시기 바랍니다';
+      } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+        _emailError = '올바른 이메일 형식이 아닙니다 (예: example@email.com)';
+      } else if (value.length > 100) {
+        _emailError = '이메일 주소가 너무 깁니다';
+      } else {
+        _emailError = null;
+      }
+      _formData.email = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,37 +143,41 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                       child: Column(
                         children: [
                           TextFormField(
-                            decoration: const InputDecoration(
+                            controller: _nameController,
+                            decoration: InputDecoration(
                               labelText: '이름',
                               hintText: '홍길동',
+                              errorText: _hasNameBeenEdited ? _nameError : null,
+                              counterText: '${_nameController.text.length}/50',
+                              suffixIcon: _hasNameBeenEdited
+                                  ? _nameError == null
+                                      ? const Icon(Icons.check_circle, color: Colors.green)
+                                      : const Icon(Icons.error, color: Colors.red)
+                                  : null,
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return '성함을 입력해 주시기 바랍니다';
-                              }
-                              return null;
-                            },
+                            onChanged: _validateName,
+                            validator: (value) => _nameError,
                             onSaved: (value) => _formData.name = value ?? '',
+                            maxLength: 50,
                           ),
                           SizedBox(height: DesignTokens.spacingBase),
                           TextFormField(
-                            decoration: const InputDecoration(
+                            controller: _phoneController,
+                            decoration: InputDecoration(
                               labelText: '휴대폰 번호',
                               hintText: '010-1234-5678',
                               prefixText: '+82 ',
+                              errorText: _hasPhoneBeenEdited ? _phoneError : null,
+                              helperText: '하이픈(-) 없이 입력하면 자동으로 추가됩니다',
+                              suffixIcon: _hasPhoneBeenEdited
+                                  ? _phoneError == null
+                                      ? const Icon(Icons.check_circle, color: Colors.green)
+                                      : const Icon(Icons.error, color: Colors.red)
+                                  : null,
                             ),
                             keyboardType: TextInputType.phone,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return '휴대폰 번호를 입력해 주시기 바랍니다';
-                              }
-                              // Remove non-digits and check format
-                              final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
-                              if (digits.length < 10 || digits.length > 11) {
-                                return '올바른 휴대폰 번호 형식으로 입력해 주세요';
-                              }
-                              return null;
-                            },
+                            onChanged: _validatePhone,
+                            validator: (value) => _phoneError,
                             onSaved: (value) {
                               final digits = value?.replaceAll(RegExp(r'[^0-9]'), '') ?? '';
                               _formData.phone = '+82${digits.startsWith('0') ? digits.substring(1) : digits}';
@@ -92,21 +185,22 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                           ),
                           SizedBox(height: DesignTokens.spacingBase),
                           TextFormField(
-                            decoration: const InputDecoration(
+                            controller: _emailController,
+                            decoration: InputDecoration(
                               labelText: '이메일',
                               hintText: 'example@email.com',
+                              errorText: _hasEmailBeenEdited ? _emailError : null,
+                              suffixIcon: _hasEmailBeenEdited
+                                  ? _emailError == null
+                                      ? const Icon(Icons.check_circle, color: Colors.green)
+                                      : const Icon(Icons.error, color: Colors.red)
+                                  : null,
                             ),
                             keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return '이메일 주소를 입력해 주시기 바랍니다';
-                              }
-                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                                return '올바른 이메일 형식으로 입력해 주세요';
-                              }
-                              return null;
-                            },
+                            onChanged: _validateEmail,
+                            validator: (value) => _emailError,
                             onSaved: (value) => _formData.email = value ?? '',
+                            maxLength: 100,
                           ),
                         ],
                       ),
@@ -224,11 +318,15 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
 
   Future<void> _submitForm() async {
     Logger.debug('Submit form called');
-    setState(() => _errorMessage = null);
     
     if (!_formKey.currentState!.validate()) {
       Logger.warning('Form validation failed');
-      setState(() => _errorMessage = '모든 필수 항목을 입력해주세요.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('모든 필수 항목을 올바르게 입력해주세요.'),
+          backgroundColor: DesignTokens.danger,
+        ),
+      );
       return;
     }
 
@@ -298,7 +396,6 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
       }
     } catch (e) {
       Logger.error('Form submission error', e);
-      setState(() => _errorMessage = '제출 중 오류가 발생했습니다: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

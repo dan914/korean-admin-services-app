@@ -16,11 +16,57 @@ class ApplicationsScreen extends ConsumerStatefulWidget {
 class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
   String _searchQuery = '';
   String _filterStatus = 'all';
+  
+  // Pagination variables
+  int _currentPage = 1;
+  int _itemsPerPage = 10;
+  final List<int> _itemsPerPageOptions = [10, 20, 50, 100];
+  
+  // Scroll controller for lazy loading
+  final ScrollController _scrollController = ScrollController();
+  
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+  
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+  
+  void _onScroll() {
+    // Implement lazy loading when user scrolls to bottom
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+      // Load more items if available
+      final applications = ref.read(applicationProvider);
+      final filteredApplications = _getFilteredApplications(applications);
+      final totalPages = (filteredApplications.length / _itemsPerPage).ceil();
+      
+      if (_currentPage < totalPages) {
+        setState(() {
+          _currentPage++;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final applications = ref.watch(applicationProvider);
     final filteredApplications = _getFilteredApplications(applications);
+    
+    // Calculate pagination
+    final totalItems = filteredApplications.length;
+    final totalPages = (totalItems / _itemsPerPage).ceil();
+    final startIndex = (_currentPage - 1) * _itemsPerPage;
+    final endIndex = startIndex + _itemsPerPage;
+    final paginatedApplications = filteredApplications.sublist(
+      startIndex,
+      endIndex > totalItems ? totalItems : endIndex,
+    );
 
     return Scaffold(
       backgroundColor: DesignTokens.bgDefault,
@@ -61,6 +107,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                     onChanged: (value) {
                       setState(() {
                         _searchQuery = value;
+                        _currentPage = 1; // Reset to first page when searching
                       });
                     },
                     decoration: InputDecoration(
@@ -90,6 +137,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                     onChanged: (value) {
                       setState(() {
                         _filterStatus = value!;
+                        _currentPage = 1; // Reset to first page when filtering
                       });
                     },
                     items: const [
@@ -127,13 +175,26 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                       ],
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredApplications.length,
-                    itemBuilder: (context, index) {
-                      final app = filteredApplications[index];
-                      return _buildApplicationCard(app, index);
-                    },
+                : Column(
+                    children: [
+                      // Pagination controls at the top
+                      _buildPaginationControls(totalItems, totalPages),
+                      // List of applications
+                      Expanded(
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.all(16),
+                          itemCount: paginatedApplications.length,
+                          itemBuilder: (context, index) {
+                            final app = paginatedApplications[index];
+                            final globalIndex = startIndex + index;
+                            return _buildApplicationCard(app, globalIndex);
+                          },
+                        ),
+                      ),
+                      // Pagination info at the bottom
+                      _buildPaginationInfo(startIndex, endIndex, totalItems),
+                    ],
                   ),
           ),
         ],
@@ -483,6 +544,189 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     );
   }
 
+  Widget _buildPaginationControls(int totalItems, int totalPages) {
+    if (totalItems <= _itemsPerPageOptions.first) {
+      return const SizedBox.shrink();
+    }
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: DesignTokens.borderLight),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Items per page selector
+          Row(
+            children: [
+              const Text('페이지당 항목: '),
+              const SizedBox(width: 8),
+              DropdownButton<int>(
+                value: _itemsPerPage,
+                items: _itemsPerPageOptions.map((count) {
+                  return DropdownMenuItem(
+                    value: count,
+                    child: Text('$count개'),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _itemsPerPage = value!;
+                    _currentPage = 1; // Reset to first page
+                  });
+                },
+              ),
+            ],
+          ),
+          // Page navigation
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.first_page),
+                onPressed: _currentPage > 1
+                    ? () => setState(() => _currentPage = 1)
+                    : null,
+                tooltip: '처음 페이지',
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: _currentPage > 1
+                    ? () => setState(() => _currentPage--)
+                    : null,
+                tooltip: '이전 페이지',
+              ),
+              InkWell(
+                onTap: totalPages > 1 ? () => _showJumpToPageDialog(totalPages) : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: DesignTokens.borderLight),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        '$_currentPage / $totalPages',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      if (totalPages > 1) ...[
+                        const SizedBox(width: 4),
+                        Icon(Icons.edit, size: 14, color: DesignTokens.textSecondary),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: _currentPage < totalPages
+                    ? () => setState(() => _currentPage++)
+                    : null,
+                tooltip: '다음 페이지',
+              ),
+              IconButton(
+                icon: const Icon(Icons.last_page),
+                onPressed: _currentPage < totalPages
+                    ? () => setState(() => _currentPage = totalPages)
+                    : null,
+                tooltip: '마지막 페이지',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPaginationInfo(int startIndex, int endIndex, int totalItems) {
+    if (totalItems == 0) return const SizedBox.shrink();
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: DesignTokens.borderLight),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '전체 $totalItems건 중 ${startIndex + 1}-${endIndex > totalItems ? totalItems : endIndex}건 표시 중',
+            style: TextStyle(
+              color: DesignTokens.textSecondary,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showJumpToPageDialog(int totalPages) {
+    final TextEditingController pageController = TextEditingController(text: _currentPage.toString());
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('페이지 이동'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('1부터 $totalPages 사이의 페이지 번호를 입력하세요'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: pageController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '페이지 번호',
+                  border: OutlineInputBorder(),
+                ),
+                autofocus: true,
+                onSubmitted: (value) {
+                  final page = int.tryParse(value);
+                  if (page != null && page >= 1 && page <= totalPages) {
+                    setState(() => _currentPage = page);
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final page = int.tryParse(pageController.text);
+                if (page != null && page >= 1 && page <= totalPages) {
+                  setState(() => _currentPage = page);
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('올바른 페이지 번호를 입력하세요 (1-$totalPages)'),
+                      backgroundColor: DesignTokens.danger,
+                    ),
+                  );
+                }
+              },
+              child: const Text('이동'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
   List<Map<String, dynamic>> _getFilteredApplications(List<Map<String, dynamic>> applications) {
     return applications.where((app) {
       // Status filter
@@ -630,41 +874,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     );
   }
 
-  void _sendEmailNotification(Map<String, dynamic> app) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('이메일 전송'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${app['name']}님께 이메일을 전송하시겠습니까?'),
-            const SizedBox(height: 8),
-            Text('이메일: ${app['email'] ?? "등록된 이메일 없음"}', style: const TextStyle(fontSize: 12)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: app['email'] != null ? () {
-              Navigator.of(context).pop();
-              // TODO: Implement actual email sending
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('이메일이 전송되었습니다'),
-                  backgroundColor: Colors.blue,
-                ),
-              );
-            } : null,
-            child: const Text('전송'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _deleteApplication(int index) {
     showDialog(
