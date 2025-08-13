@@ -100,4 +100,4 @@ coverage/
 flutter/
 
 # Claude Code settings
-.claude/
+.claude/test_workflow.dart

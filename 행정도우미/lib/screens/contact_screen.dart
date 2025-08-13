@@ -9,6 +9,7 @@ import '../services/supabase_service.dart';
 import '../models/lead.dart';
 import '../config/env.dart';
 import '../utils/logger.dart';
+import '../utils/rate_limiter.dart';
 
 class ContactFormData {
   String name = '';
@@ -318,6 +319,20 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
 
   Future<void> _submitForm() async {
     Logger.debug('Submit form called');
+    
+    // Rate limiting check
+    if (!RateLimiter.isAllowed('form_submission')) {
+      final remainingSeconds = RateLimiter.getRemainingCooldown('form_submission');
+      Logger.warning('Rate limit exceeded, $remainingSeconds seconds remaining');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('너무 자주 제출하셨습니다. $remainingSeconds초 후에 다시 시도해주세요.'),
+          backgroundColor: DesignTokens.warning,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      return;
+    }
     
     if (!_formKey.currentState!.validate()) {
       Logger.warning('Form validation failed');
