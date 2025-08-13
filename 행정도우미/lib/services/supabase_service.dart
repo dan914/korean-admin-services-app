@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
+import '../utils/logger.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -32,9 +33,9 @@ class SupabaseService {
     required Map<String, dynamic> formData,
     required Map<String, dynamic> contactInfo,
   }) async {
-    print('📤 Starting Supabase submission...');
-    print('📤 Form data: $formData');
-    print('📤 Contact info: $contactInfo');
+    Logger.info('Starting Supabase submission...');
+    Logger.info('Form data: $formData');
+    Logger.info('Contact info: $contactInfo');
     
     try {
       // Process documents if they exist
@@ -108,9 +109,26 @@ class SupabaseService {
 
       return response;
     } catch (e) {
-      print('❌ Supabase error details: $e');
-      print('❌ Error type: ${e.runtimeType}');
-      throw Exception('Failed to submit lead: $e');
+      Logger.error('Supabase error details', e);
+      
+      // Provide specific error messages based on error type
+      if (e.toString().contains('violates unique constraint')) {
+        throw Exception('이미 등록된 정보입니다. 중복 제출을 방지하기 위해 거부되었습니다.');
+      } else if (e.toString().contains('violates foreign key constraint')) {
+        throw Exception('데이터 관계 오류가 발생했습니다. 관리자에게 문의하세요.');
+      } else if (e.toString().contains('value too long')) {
+        throw Exception('입력하신 내용이 너무 깁니다. 내용을 줄여주세요.');
+      } else if (e.toString().contains('connection')) {
+        throw Exception('서버 연결에 실패했습니다. 인터넷 연결을 확인해주세요.');
+      } else if (e.toString().contains('timeout')) {
+        throw Exception('요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
+      } else if (e.toString().contains('permission denied') || e.toString().contains('RLS')) {
+        throw Exception('권한이 없습니다. 관리자에게 문의하세요.');
+      } else if (e.toString().contains('column') && e.toString().contains('does not exist')) {
+        throw Exception('데이터베이스 구조 오류가 발생했습니다. 관리자에게 문의하세요.');
+      } else {
+        throw Exception('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
     }
   }
 
@@ -152,7 +170,7 @@ class SupabaseService {
       });
     } catch (e) {
       // Log error but don't fail the main operation
-      print('Failed to create audit trail: $e');
+      Logger.debug('Failed to create audit trail: $e');
     }
   }
 

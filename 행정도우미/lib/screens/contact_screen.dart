@@ -8,6 +8,7 @@ import '../providers/wizard_provider.dart';
 import '../services/supabase_service.dart';
 import '../models/lead.dart';
 import '../config/env.dart';
+import '../utils/logger.dart';
 
 class ContactFormData {
   String name = '';
@@ -222,25 +223,25 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
   }
 
   Future<void> _submitForm() async {
-    print('🚀 Submit form called');
+    Logger.debug('Submit form called');
     setState(() => _errorMessage = null);
     
     if (!_formKey.currentState!.validate()) {
-      print('❌ Form validation failed');
+      Logger.warning('Form validation failed');
       setState(() => _errorMessage = '모든 필수 항목을 입력해주세요.');
       return;
     }
 
     _formKey.currentState!.save();
-    print('✅ Form validated and saved');
-    print('Contact Info: Name=${_formData.name}, Phone=${_formData.phone}, Email=${_formData.email}');
+    Logger.info('Form validated and saved');
+    Logger.debug('Contact Info: Name=${_formData.name}, Phone=${_formData.phone}, Email=${_formData.email}');
 
     setState(() => _isSubmitting = true);
 
     try {
       // Get wizard state
       final wizardState = ref.read(wizardProvider);
-      print('📋 Wizard state: ${wizardState.answers}');
+      Logger.debug('Wizard state', wizardState.answers);
       
       // Create lead object for webhooks
       final leadData = Lead(
@@ -280,23 +281,23 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
         );
       } else {
         // Offline mode - just simulate submission
-        print('📧 Lead submission (offline mode):');
-        print('Form Data: ${wizardState.answers}');
-        print('Contact: ${_formData.name}, ${_formData.phone}, ${_formData.email}');
-        print('Notifications: Kakao=${_formData.allowKakao}, SMS=${_formData.allowSms}, Email=${_formData.allowEmail}');
+        Logger.info('Lead submission (offline mode)');
+        Logger.debug('Form Data', wizardState.answers);
+        Logger.debug('Contact', '${_formData.name}, ${_formData.phone}, ${_formData.email}');
+        Logger.debug('Notifications', 'Kakao=${_formData.allowKakao}, SMS=${_formData.allowSms}, Email=${_formData.allowEmail}');
         await Future.delayed(const Duration(seconds: 1));
       }
 
       // Send webhook notifications (works in both online and offline modes)
-      print('🔔 Sending webhook notifications...');
+      Logger.info('Sending webhook notifications...');
       _sendWebhookNotifications(leadData);
 
-      print('✅ Form submission successful, navigating to success');
+      Logger.success('Form submission successful, navigating to success');
       if (mounted) {
         context.go('/success');
       }
     } catch (e) {
-      print('❌ Form submission error: $e');
+      Logger.error('Form submission error', e);
       setState(() => _errorMessage = '제출 중 오류가 발생했습니다: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -346,17 +347,18 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
       // );
 
       // For now, just log the notification data
-      print('🔔 Webhook notification data prepared:');
-      print('Name: ${lead.contactInfo.name}');
-      print('Email: ${lead.contactInfo.email}');
-      print('Phone: ${lead.contactInfo.phone}');
-      print('Issue Type: ${_getIssueTypeFromFormData(lead.formData)}');
+      Logger.debug('Webhook notification data prepared', {
+        'Name': lead.contactInfo.name,
+        'Email': lead.contactInfo.email,
+        'Phone': lead.contactInfo.phone,
+        'Issue Type': _getIssueTypeFromFormData(lead.formData),
+      });
       
       // Simulate webhook success
-      print('✅ Webhook notifications sent (simulated)');
+      Logger.info('Webhook notifications sent (simulated)');
       
     } catch (e) {
-      print('❌ Failed to send webhook notifications: $e');
+      Logger.error('Failed to send webhook notifications', e);
       // Don't fail the entire submission if webhooks fail
     }
   }

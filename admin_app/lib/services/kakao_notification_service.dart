@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../utils/logger.dart';
 import 'package:http/http.dart' as http;
 
 /// KakaoTalk AlimTalk (알림톡) Service
@@ -63,14 +64,14 @@ class KakaoNotificationService {
       );
       
       if (response.statusCode == 200) {
-        print('✅ KakaoTalk AlimTalk sent successfully');
+        Logger.success('KakaoTalk AlimTalk sent successfully');
         return true;
       } else {
-        print('❌ Failed to send AlimTalk: ${response.body}');
+        Logger.error('Failed to send AlimTalk: ${response.body}');
         return false;
       }
     } catch (e) {
-      print('❌ Error sending AlimTalk: $e');
+      Logger.error('Error sending AlimTalk: $e');
       return false;
     }
   }

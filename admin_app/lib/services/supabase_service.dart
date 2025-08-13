@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/env.dart';
 import 'auth_service.dart';
+import '../utils/logger.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -57,13 +58,13 @@ class SupabaseService {
       
       return applications;
     } on PostgrestException catch (e) {
-      print('Database error fetching applications: ${e.message}');
+      Logger.debug('Database error fetching applications: ${e.message}');
       if (e.code == '42501' || e.message.contains('RLS')) {
         throw Exception('Access denied. Please ensure you are logged in with proper permissions.');
       }
       throw Exception('Failed to fetch applications: ${e.message}');
     } catch (e) {
-      print('Error fetching applications: $e');
+      Logger.debug('Error fetching applications: $e');
       if (e.toString().contains('not authenticated')) {
         throw e;
       }
@@ -88,14 +89,19 @@ class SupabaseService {
           })
           .eq('id', id);
     } on PostgrestException catch (e) {
-      print('Database error updating application: ${e.message}');
+      Logger.error('Database error updating application', e.message);
       if (e.code == '42501' || e.message.contains('RLS')) {
-        throw Exception('Access denied. Please ensure you are logged in with proper permissions.');
+        throw Exception('권한이 없습니다. 관리자 권한이 필요합니다.');
+      } else if (e.code == '23505') {
+        throw Exception('중복된 데이터입니다. 이미 처리된 신청서일 수 있습니다.');
       }
-      throw Exception('Failed to update application: ${e.message}');
+      throw Exception('신청서 상태 업데이트 중 오류가 발생했습니다.');
     } catch (e) {
-      print('Error updating application status: $e');
-      throw e;
+      Logger.error('Error updating application status', e);
+      if (e.toString().contains('not authenticated')) {
+        throw Exception('인증이 필요합니다. 다시 로그인해주세요.');
+      }
+      throw Exception('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
   }
 
@@ -113,13 +119,13 @@ class SupabaseService {
           .delete()
           .eq('id', id);
     } on PostgrestException catch (e) {
-      print('Database error deleting application: ${e.message}');
+      Logger.debug('Database error deleting application: ${e.message}');
       if (e.code == '42501' || e.message.contains('RLS')) {
         throw Exception('Access denied. Please ensure you are logged in with proper permissions.');
       }
       throw Exception('Failed to delete application: ${e.message}');
     } catch (e) {
-      print('Error deleting application: $e');
+      Logger.debug('Error deleting application: $e');
       throw e;
     }
   }
@@ -147,9 +153,9 @@ class SupabaseService {
         'recent_week': response['last_week_count'] ?? 0,
       };
     } on PostgrestException catch (e) {
-      print('Database error fetching statistics: ${e.message}');
+      Logger.debug('Database error fetching statistics: ${e.message}');
       if (e.code == '42501' || e.message.contains('RLS')) {
-        print('RLS policy blocking statistics access - returning zeros');
+        Logger.debug('RLS policy blocking statistics access - returning zeros');
       }
       return {
         'total': 0,
@@ -160,7 +166,7 @@ class SupabaseService {
         'recent_week': 0,
       };
     } catch (e) {
-      print('Error fetching statistics: $e');
+      Logger.debug('Error fetching statistics: $e');
       return {
         'total': 0,
         'pending': 0,
@@ -192,9 +198,9 @@ class SupabaseService {
         'created_at': DateTime.now().toIso8601String(),
       });
     } on PostgrestException catch (e) {
-      print('Database error adding audit entry: ${e.message}');
+      Logger.debug('Database error adding audit entry: ${e.message}');
     } catch (e) {
-      print('Error adding audit entry: $e');
+      Logger.debug('Error adding audit entry: $e');
     }
   }
 }

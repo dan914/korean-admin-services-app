@@ -92,7 +92,7 @@ class _SimpleAdminScreenState extends ConsumerState<SimpleAdminScreen> {
         ],
       ),
       body: isLoading 
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: const CircularProgressIndicator())
           : _buildLeadsList(),
     );
   }

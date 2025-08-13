@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../ui/design_tokens.dart';
 import '../providers/application_provider.dart';
 import 'package:intl/intl.dart';
+import '../utils/logger.dart';
 // Note: file_picker will be needed for web/desktop file saving
 
 class ExportScreen extends ConsumerStatefulWidget {
@@ -472,7 +473,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     
     // In a real app, you would save this to a file
     // For now, we'll just print it
-    print('CSV Export:\n$csv');
+    Logger.debug('CSV Export:\n$csv');
   }
 
   void _exportAsJSON(List<Map<String, dynamic>> data) {
@@ -480,7 +481,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     
     // In a real app, you would save this to a file
     // For now, we'll just print it
-    print('JSON Export:\n$json');
+    Logger.debug('JSON Export:\n$json');
   }
 
   String _getStatusText(String status) {

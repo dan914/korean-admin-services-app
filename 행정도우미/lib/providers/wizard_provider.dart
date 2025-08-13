@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/steps.dart';
+import '../utils/logger.dart';
 
 class WizardState {
   final int currentStepId;
@@ -70,11 +71,11 @@ class WizardNotifier extends StateNotifier<WizardState> {
   }
 
   void nextStep() {
-    print('🚀 nextStep called - current state: stepId=${state.currentStepId}, subStepKey=${state.currentSubStepKey}');
+    Logger.info('nextStep called - current state: stepId=${state.currentStepId}, subStepKey=${state.currentSubStepKey}');
     
     // Handle sub-step navigation for any step with sub-steps
     if (state.currentSubStepKey != null) {
-      print('📌 Currently in sub-step, calling _handleSubStepNavigation');
+      Logger.debug('Currently in sub-step, calling _handleSubStepNavigation');
       _handleSubStepNavigation();
       return;
     }
@@ -83,10 +84,10 @@ class WizardNotifier extends StateNotifier<WizardState> {
     final currentStep = WizardSteps.getStepById(state.currentStepId);
     if (currentStep != null && currentStep.subSteps != null) {
       final stepAnswer = state.answers['step_${state.currentStepId}'];
-      print('🔍 Checking for sub-steps: answer=$stepAnswer, has substeps=${currentStep.subSteps!.keys.toList()}');
+      Logger.debug('Checking for sub-steps: answer=$stepAnswer, has substeps=${currentStep.subSteps!.keys.toList()}');
       if (stepAnswer != null && currentStep.subSteps!.containsKey(stepAnswer)) {
         // Enter sub-step
-        print('➡️ Entering sub-step for answer: $stepAnswer');
+        Logger.debug('Entering sub-step for answer: $stepAnswer');
         state = state.copyWith(
           currentSubStepKey: () => stepAnswer,
           currentSubStepIndex: 0,
@@ -115,13 +116,13 @@ class WizardNotifier extends StateNotifier<WizardState> {
     final step = WizardSteps.getStepById(state.currentStepId);
     final subSteps = step?.subSteps?[state.currentSubStepKey];
     
-    print('🔍 _handleSubStepNavigation: stepId=${state.currentStepId}, subStepKey=${state.currentSubStepKey}, subStepIndex=${state.currentSubStepIndex}');
-    print('🔍 SubSteps length: ${subSteps?.length ?? 0}');
+    Logger.debug('_handleSubStepNavigation: stepId=${state.currentStepId}, subStepKey=${state.currentSubStepKey}, subStepIndex=${state.currentSubStepIndex}');
+    Logger.debug('SubSteps length: ${subSteps?.length ?? 0}');
     
     if (subSteps != null && subSteps.isNotEmpty) {
       if (state.currentSubStepIndex < subSteps.length - 1) {
         // Go to next sub-step
-        print('📍 Moving to next sub-step: ${state.currentSubStepIndex + 1}');
+        Logger.debug('Moving to next sub-step: ${state.currentSubStepIndex + 1}');
         state = state.copyWith(
           currentSubStepIndex: state.currentSubStepIndex + 1,
         );
@@ -132,7 +133,7 @@ class WizardNotifier extends StateNotifier<WizardState> {
           final newHistory = List<int>.from(state.stepHistory);
           newHistory.add(nextStepId);
           
-          print('✅ Finished sub-steps, moving to step $nextStepId');
+          Logger.success('Finished sub-steps, moving to step $nextStepId');
           
           state = state.copyWith(
             currentStepId: nextStepId,
@@ -144,7 +145,7 @@ class WizardNotifier extends StateNotifier<WizardState> {
       }
     } else {
       // No sub-steps found, clear the sub-step state and move to next step
-      print('⚠️ No sub-steps found for key "${state.currentSubStepKey}" on step ${state.currentStepId}, clearing sub-step state');
+      Logger.warning('No sub-steps found for key "${state.currentSubStepKey}" on step ${state.currentStepId}, clearing sub-step state');
       if (state.currentStepId < WizardSteps.getTotalSteps()) {
         final nextStepId = state.currentStepId + 1;
         final newHistory = List<int>.from(state.stepHistory);

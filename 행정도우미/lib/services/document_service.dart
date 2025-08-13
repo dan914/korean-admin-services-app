@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
+import '../utils/logger.dart';
 
 class DocumentService {
   static const int maxFileSize = 10 * 1024 * 1024; // 10MB
@@ -35,7 +36,7 @@ class DocumentService {
       }
       return null;
     } catch (e) {
-      print('Error picking documents: $e');
+      Logger.debug('Error picking documents: $e');
       rethrow;
     }
   }

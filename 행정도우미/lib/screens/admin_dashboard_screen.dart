@@ -108,7 +108,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         ],
       ),
       body: _isLoading 
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: const CircularProgressIndicator())
           : SingleChildScrollView(
               padding: EdgeInsets.all(DesignTokens.spacingBase),
               child: Column(

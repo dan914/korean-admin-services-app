@@ -167,7 +167,7 @@ class _WebhookSettingsScreenState extends State<WebhookSettingsScreen> {
                 const PopupMenuItem(
                   value: 'edit',
                   child: ListTile(
-                    leading: Icon(Icons.edit),
+                    leading: const Icon(Icons.edit),
                     title: Text('편집'),
                     contentPadding: EdgeInsets.zero,
                   ),

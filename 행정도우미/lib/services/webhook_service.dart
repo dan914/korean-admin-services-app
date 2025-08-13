@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/lead.dart';
+import '../utils/logger.dart';
 
 class WebhookService {
   static const String _defaultEmailWebhook = 'https://api.emailjs.com/api/v1.0/email/send';
@@ -13,7 +14,7 @@ class WebhookService {
   /// Send email notification when a new lead is submitted
   static Future<bool> sendNewLeadNotification(Lead lead) async {
     try {
-      print('📧 Sending email notification for lead: ${lead.contactInfo.name}');
+      Logger.info('Sending email notification for lead: ${lead.contactInfo.name}');
       
       final emailData = {
         'service_id': _emailjsServiceId,
@@ -40,14 +41,14 @@ class WebhookService {
       );
       
       if (response.statusCode == 200) {
-        print('✅ Email notification sent successfully');
+        Logger.success('Email notification sent successfully');
         return true;
       } else {
-        print('❌ Failed to send email: ${response.statusCode} - ${response.body}');
+        Logger.error('Failed to send email: ${response.statusCode} - ${response.body}');
         return false;
       }
     } catch (e) {
-      print('❌ Error sending email notification: $e');
+      Logger.error('Error sending email notification: $e');
       return false;
     }
   }
@@ -59,7 +60,7 @@ class WebhookService {
     String format = 'slack', // 'slack', 'discord', 'generic'
   }) async {
     try {
-      print('🔔 Sending webhook notification to: $webhookUrl');
+      Logger.info('Sending webhook notification to: $webhookUrl');
       
       Map<String, dynamic> payload;
       
@@ -83,14 +84,14 @@ class WebhookService {
       );
       
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        print('✅ Webhook notification sent successfully');
+        Logger.success('Webhook notification sent successfully');
         return true;
       } else {
-        print('❌ Failed to send webhook: ${response.statusCode} - ${response.body}');
+        Logger.error('Failed to send webhook: ${response.statusCode} - ${response.body}');
         return false;
       }
     } catch (e) {
-      print('❌ Error sending webhook notification: $e');
+      Logger.error('Error sending webhook notification: $e');
       return false;
     }
   }

@@ -1,7 +1,7 @@
 /// Production-safe logger that can be easily disabled
 class Logger {
   static const bool _enableLogging = bool.fromEnvironment('ENABLE_LOGGING', defaultValue: false);
-  static const String _appName = '행정도우미';
+  static const String _appName = 'AdminApp';
   
   /// Log levels
   static const String _DEBUG = '🔧 DEBUG';
@@ -36,7 +36,7 @@ class Logger {
     // In production, send to error tracking service instead
     if (_enableLogging) {
       _log(_ERROR, message, error);
-      if (stackTrace != null) {
+      if (stackTrace != null && _enableLogging) {
         // Using _log instead of print for stack traces
         _log(_ERROR, 'Stack trace', stackTrace.toString());
       }
@@ -104,17 +104,3 @@ class Logger {
     }
   }
 }
-
-/// Usage examples:
-/// 
-/// Instead of: print('Form submitted');
-/// Use: Logger.info('Form submitted');
-/// 
-/// Instead of: print('Error: $e');
-/// Use: Logger.error('Form submission failed', e);
-/// 
-/// For development only logs:
-/// Logger.debug('Current state', state.toJson());
-/// 
-/// To enable logging:
-/// flutter run --dart-define=ENABLE_LOGGING=true

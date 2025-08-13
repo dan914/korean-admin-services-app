@@ -52,7 +52,8 @@
       "Bash(zip:*)",
       "Bash(cd:*)",
       "Bash(kill:*)",
-      "Bash(dart run:*)"
+      "Bash(dart run:*)",
+      "Bash(python3:*)"
     ],
     "deny": []
   }

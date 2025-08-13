@@ -8,6 +8,7 @@ import '../widgets/step_card.dart';
 import '../widgets/radio_option.dart';
 import '../widgets/app_button.dart';
 import '../ui/design_tokens.dart';
+import '../utils/logger.dart';
 
 class WizardScreen extends ConsumerStatefulWidget {
   const WizardScreen({Key? key}) : super(key: key);
@@ -89,14 +90,14 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
               currentAnswer: currentAnswer,
               isLastStep: isLastStep,
               onNext: () {
-                print('🎯 Button pressed - isLastStep: $isLastStep, stepNumber: $stepNumber, totalSteps: $totalSteps');
-                print('📍 Current step: $stepNumber/${totalSteps}');
-                print('📋 Current answer: $currentAnswer');
+                Logger.debug('Button pressed - isLastStep: $isLastStep, stepNumber: $stepNumber, totalSteps: $totalSteps');
+                Logger.debug('Current step: $stepNumber/${totalSteps}');
+                Logger.debug('Current answer: $currentAnswer');
                 if (isLastStep) {
-                  print('✅ This is the last step, navigating to memo');
+                  Logger.success('This is the last step, navigating to memo');
                   context.go('/memo');
                 } else {
-                  print('➡️ Not the last step, going to next step');
+                  Logger.debug('Not the last step, going to next step');
                   ref.read(wizardProvider.notifier).nextStep();
                 }
               },

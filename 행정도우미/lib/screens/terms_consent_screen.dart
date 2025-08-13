@@ -452,7 +452,7 @@ class _TermsConsentScreenState extends ConsumerState<TermsConsentScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('관리자 비밀번호를 입력하세요'),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextField(
                 controller: passwordController,
                 obscureText: true,

@@ -14,6 +14,7 @@ import 'screens/simple_admin_screen.dart';
 import 'screens/webhook_settings_screen.dart';
 import 'services/supabase_service.dart';
 import 'config/env.dart';
+import '../utils/logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,9 +26,9 @@ void main() async {
       anonKey: Env.supabaseAnonKey,
     );
   } else {
-    print('⚠️ Supabase not configured. Running in offline mode.');
-    print('To enable Supabase, run with:');
-    print('flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key');
+    Logger.warning('Supabase not configured. Running in offline mode.');
+    Logger.debug('To enable Supabase, run with:');
+    Logger.debug('flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key');
   }
   
   runApp(

@@ -9,6 +9,7 @@ import '../services/document_service.dart';
 import '../widgets/answer_card.dart';
 import '../widgets/app_button.dart';
 import '../ui/design_tokens.dart';
+import '../utils/logger.dart';
 
 class SummaryScreen extends ConsumerWidget {
   const SummaryScreen({Key? key}) : super(key: key);
@@ -75,7 +76,7 @@ class SummaryScreen extends ConsumerWidget {
   List<Widget> _buildAnswerCards(BuildContext context, WidgetRef ref, Map<String, dynamic> answers) {
     final List<Widget> cards = [];
     
-    print('📋 Building answer cards from answers: $answers');
+    Logger.debug('Building answer cards from answers: $answers');
     
     // Process main steps 1-10
     for (int stepId = 1; stepId <= 10; stepId++) {
@@ -136,7 +137,7 @@ class SummaryScreen extends ConsumerWidget {
       }
     }
     
-    print('📊 Built ${cards.length} answer cards');
+    Logger.debug('Built ${cards.length} answer cards');
     return cards;
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/supabase_service.dart';
+import '../utils/logger.dart';
 
 class ApplicationNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   final SupabaseService _supabaseService = SupabaseService();
@@ -13,7 +14,7 @@ class ApplicationNotifier extends StateNotifier<List<Map<String, dynamic>>> {
       final applications = await _supabaseService.getApplications();
       state = applications;
     } catch (e) {
-      print('Error loading applications: $e');
+      Logger.debug('Error loading applications: $e');
       state = [];
     }
   }
@@ -46,7 +47,7 @@ class ApplicationNotifier extends StateNotifier<List<Map<String, dynamic>>> {
         await _loadApplications(); // Refresh the data
       }
     } catch (e) {
-      print('Error updating application status: $e');
+      Logger.debug('Error updating application status: $e');
     }
   }
 
@@ -62,7 +63,7 @@ class ApplicationNotifier extends StateNotifier<List<Map<String, dynamic>>> {
         await _loadApplications(); // Refresh the data
       }
     } catch (e) {
-      print('Error deleting application: $e');
+      Logger.debug('Error deleting application: $e');
     }
   }
 
