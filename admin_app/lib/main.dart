@@ -10,6 +10,7 @@ import 'screens/webhook_settings_screen.dart';
 import 'screens/export_screen.dart';
 import 'ui/design_tokens.dart';
 import 'services/supabase_service.dart';
+import 'utils/session_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

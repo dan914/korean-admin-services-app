@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../ui/design_tokens.dart';
 import '../providers/auth_provider.dart';
 import '../providers/application_provider.dart';
+import '../utils/session_manager.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -15,6 +16,72 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Initialize session management
+    SessionManager.instance.initialize(
+      onSessionWarning: _showSessionWarning,
+      onSessionExpired: _handleSessionExpired,
+    );
+  }
+  
+  void _showSessionWarning() {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('⚠️ 세션 만료 경고'),
+        content: const Text('
+          5분 후 자동으로 로그아웃됩니다.\n
+          계속하시려면 "연장"을 클릭하세요.
+        '),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _logout();
+            },
+            child: const Text('로그아웃'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              SessionManager.instance.extendSession();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('세션이 30분 연장되었습니다.'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: const Text('연장'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _handleSessionExpired() {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('세션이 만료되었습니다. 다시 로그인해주세요.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    _logout();
+  }
+  
+  @override
+  void dispose() {
+    SessionManager.instance.dispose();
+    super.dispose();
+  }
 
   final List<_NavItem> _navItems = [
     _NavItem(
@@ -55,7 +122,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
     
-    return Scaffold(
+    return SessionTracker(
+      child: Scaffold(
       backgroundColor: DesignTokens.bgDefault,
       body: Row(
         children: [
@@ -408,6 +476,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
           ),
         ],
+      ),
       ),
     );
   }
