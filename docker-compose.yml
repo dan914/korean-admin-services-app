@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  main-app:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./행정도우미/build/web:/usr/share/nginx/html
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    labels:
+      - "Main Korean Admin Services App"
+
+  admin-app:
+    image: nginx:alpine
+    ports:
+      - "8081:80"
+    volumes:
+      - ./admin_app/build/web:/usr/share/nginx/html
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    labels:
+      - "Admin Panel"
+
+# To run:
+# 1. Build the apps: flutter build web
+# 2. Run: docker-compose up
+# 3. Access: 
+#    - Main app: http://localhost:8080
+#    - Admin app: http://localhost:8081
