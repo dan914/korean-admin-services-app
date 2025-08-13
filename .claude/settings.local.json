@@ -53,7 +53,12 @@
       "Bash(cd:*)",
       "Bash(kill:*)",
       "Bash(dart run:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(export ANDROID_HOME=\"/opt/homebrew/share/android-commandlinetools\")",
+      "Bash(export PATH=\"$PATH:$ANDROID_HOME/cmdline-tools/latest/bin\")",
+      "Bash(sdkmanager:*)",
+      "Bash(java:*)"
     ],
     "deny": []
   }

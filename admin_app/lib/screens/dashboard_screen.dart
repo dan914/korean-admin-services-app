@@ -35,10 +35,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('⚠️ 세션 만료 경고'),
-        content: const Text('
-          5분 후 자동으로 로그아웃됩니다.\n
-          계속하시려면 "연장"을 클릭하세요.
-        '),
+        content: const Text('5분 후 자동으로 로그아웃됩니다.\n계속하시려면 "연장"을 클릭하세요.'),
         actions: [
           TextButton(
             onPressed: () {
@@ -122,11 +119,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
     
-    return SessionTracker(
-      child: Scaffold(
-      backgroundColor: DesignTokens.bgDefault,
-      body: Row(
-        children: [
+    return Scaffold(
+        backgroundColor: DesignTokens.bgDefault,
+        body: Row(
+          children: [
           // Sidebar for desktop
           if (isDesktop)
             _buildSidebar(),
@@ -476,7 +472,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
           ),
         ],
-      ),
       ),
     );
   }

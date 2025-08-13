@@ -1,0 +1,156 @@
+name: Build Korean Admin Apps APKs
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-main-app:
+    name: Build Main App APK
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.32.8'
+        channel: 'stable'
+        
+    - name: Get dependencies
+      run: |
+        cd 행정도우미
+        flutter pub get
+        
+    - name: Analyze code
+      run: |
+        cd 행정도우미
+        flutter analyze
+        
+    - name: Build APK
+      run: |
+        cd 행정도우미
+        flutter build apk --release --verbose
+        
+    - name: Upload Main App APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: korean-admin-main-app-apk
+        path: 행정도우미/build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
+
+  build-admin-app:
+    name: Build Admin Panel APK
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.32.8'
+        channel: 'stable'
+        
+    - name: Get dependencies
+      run: |
+        cd admin_app
+        flutter pub get
+        
+    - name: Analyze code
+      run: |
+        cd admin_app
+        flutter analyze
+        
+    - name: Build APK
+      run: |
+        cd admin_app
+        flutter build apk --release --verbose
+        
+    - name: Upload Admin App APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: korean-admin-panel-app-apk
+        path: admin_app/build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
+
+  create-release:
+    name: Create Release with APKs
+    needs: [build-main-app, build-admin-app]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+    - name: Download Main App APK
+      uses: actions/download-artifact@v4
+      with:
+        name: korean-admin-main-app-apk
+        path: ./apks/
+        
+    - name: Download Admin App APK
+      uses: actions/download-artifact@v4
+      with:
+        name: korean-admin-panel-app-apk
+        path: ./apks/
+        
+    - name: Rename APKs
+      run: |
+        cd apks
+        mv app-release.apk korean-admin-main-app-v$(date +%Y%m%d-%H%M).apk || true
+        mv app-release.apk korean-admin-panel-app-v$(date +%Y%m%d-%H%M).apk || true
+        ls -la
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'push'
+      with:
+        tag_name: v$(date +%Y%m%d-%H%M)
+        name: Korean Admin Apps Release v$(date +%Y%m%d-%H%M)
+        body: |
+          ## Korean Administrative Services Apps
+          
+          This release contains APK files for both applications:
+          
+          ### 📱 Main Application (행정도우미)
+          - Real-time form validation
+          - Korean phone number formatting
+          - Rate limiting protection
+          - Offline-capable interface
+          
+          ### 🛠️ Admin Panel Application
+          - Dashboard with statistics
+          - Application management
+          - Pagination and search
+          - Session management
+          
+          ### 📥 Installation Instructions
+          1. Download the appropriate APK file
+          2. Enable "Install from Unknown Sources" in Android settings
+          3. Tap the APK file to install
+          4. Or use ADB: `adb install <apk-file>`
+          
+          ### 🔗 Web Versions
+          Both apps also work as Progressive Web Apps (PWA) in any browser.
+          
+          ---
+          🤖 Generated automatically by GitHub Actions
+        files: ./apks/*.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

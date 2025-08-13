@@ -94,7 +94,7 @@ class SessionManager {
   /// End session manually
   void endSession() {
     dispose();
-    AuthService().logout();
+    AuthService().signOut();
     Logger.info('Session ended manually');
   }
   
