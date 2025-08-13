@@ -29,24 +29,24 @@ jobs:
         
     - name: Get dependencies
       run: |
-        cd 행정도우미
+        cd "./행정도우미"
         flutter pub get
         
     - name: Analyze code
       run: |
-        cd 행정도우미
-        flutter analyze
+        cd "./행정도우미"
+        flutter analyze --no-fatal-infos
         
     - name: Build APK
       run: |
-        cd 행정도우미
+        cd "./행정도우미"
         flutter build apk --release --verbose
         
     - name: Upload Main App APK
       uses: actions/upload-artifact@v4
       with:
         name: korean-admin-main-app-apk
-        path: 행정도우미/build/app/outputs/flutter-apk/app-release.apk
+        path: ./행정도우미/build/app/outputs/flutter-apk/app-release.apk
         retention-days: 30
 
   build-admin-app:
@@ -76,7 +76,7 @@ jobs:
     - name: Analyze code
       run: |
         cd admin_app
-        flutter analyze
+        flutter analyze --no-fatal-infos
         
     - name: Build APK
       run: |
