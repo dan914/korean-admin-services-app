@@ -60,7 +60,11 @@
       "Bash(sdkmanager:*)",
       "Bash(java:*)",
       "WebFetch(domain:api.github.com)",
-      "Bash(./check_apk_status.sh:*)"
+      "Bash(./check_apk_status.sh:*)",
+      "Bash(git restore:*)",
+      "Bash(echo $ANDROID_HOME)",
+      "Bash(echo $ANDROID_SDK_ROOT)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }
