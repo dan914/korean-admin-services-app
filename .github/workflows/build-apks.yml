@@ -84,7 +84,7 @@ jobs:
     name: Create Release with APKs
     needs: [build-main-app, build-admin-app]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     steps:
     - name: Download Main App APK
       uses: actions/download-artifact@v4
