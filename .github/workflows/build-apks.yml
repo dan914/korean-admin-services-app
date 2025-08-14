@@ -93,27 +93,31 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: korean-admin-main-app-apk
-        path: ./apks/
+        path: ./apks/main/
         
     - name: Download Admin App APK
       uses: actions/download-artifact@v4
       with:
         name: korean-admin-panel-app-apk
-        path: ./apks/
+        path: ./apks/admin/
         
-    - name: Rename APKs
+    - name: Generate Release Tag
+      id: tag
+      run: echo "release_tag=v$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+      
+    - name: Prepare APKs for Release
       run: |
-        cd apks
-        mv app-release.apk korean-admin-main-app-v$(date +%Y%m%d-%H%M).apk || true
-        mv app-release.apk korean-admin-panel-app-v$(date +%Y%m%d-%H%M).apk || true
-        ls -la
+        mkdir -p release
+        cp ./apks/main/app-release.apk ./release/korean-admin-main-app-${{ steps.tag.outputs.release_tag }}.apk
+        cp ./apks/admin/app-release.apk ./release/korean-admin-panel-app-${{ steps.tag.outputs.release_tag }}.apk
+        ls -la release/
         
     - name: Create Release
       uses: softprops/action-gh-release@v1
       if: github.event_name == 'push'
       with:
-        tag_name: v$(date +%Y%m%d-%H%M)
-        name: Korean Admin Apps Release v$(date +%Y%m%d-%H%M)
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        name: Korean Admin Apps Release ${{ steps.tag.outputs.release_tag }}
         body: |
           ## Korean Administrative Services Apps
           
@@ -142,7 +146,7 @@ jobs:
           
           ---
           🤖 Generated automatically by GitHub Actions
-        files: ./apks/*.apk
+        files: ./release/*.apk
         draft: false
         prerelease: false
       env:
