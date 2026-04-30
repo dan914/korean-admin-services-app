@@ -39,4 +39,4 @@
 
 # Environment variables (add your Supabase credentials here)
 [build.environment]
-  FLUTTER_VERSION = "3.16.0"
+  FLUTTER_VERSION = "3.32.8"
